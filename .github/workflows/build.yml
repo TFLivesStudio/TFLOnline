@@ -36,6 +36,8 @@ jobs:
             test -s "$jarfile"
             listing=$(mktemp)
             jar tf "$jarfile" > "$listing"
+            echo "Checking $jarfile (size $(stat -c%s "$jarfile") bytes)"
+            grep -E "(velocity-plugin|Yaml.class|WireProtocol.class|bungee.yml|plugin.yml)" "$listing" || true
             grep -Fq "com/tflives/tflonline/common/WireProtocol.class" "$listing"
             grep -Fq "com/tflives/tflonline/libs/yaml/Yaml.class" "$listing"
             if [[ "$module" == velocity ]]; then
