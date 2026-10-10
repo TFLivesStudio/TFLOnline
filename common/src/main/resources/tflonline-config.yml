@@ -1,0 +1,144 @@
+# =============================================================================
+#                                TFLOnline
+#                     Network statistics for Minecraft
+# =============================================================================
+#
+# Archivo principal de configuracion del PROXY.
+# Author: tflives
+#
+# Este archivo funciona tanto con Velocity como con BungeeCord y sus forks.
+# Colocalo UNICAMENTE en la carpeta del plugin del proxy.
+# Los servidores Paper NO necesitan una copia de este archivo.
+#
+# PRIMER INICIO:
+#   1. Instala TFLOnline en tu proxy y en los backends deseados.
+#   2. Inicia el proxy para generar esta configuracion.
+#   3. TFLOnline registrara automaticamente los servidores del proxy.
+#   4. Ajusta los valores y usa /tflonline reload.
+#
+# IMPORTANTE:
+#   - Ningun puerto adicional ni Redis son necesarios para este transporte.
+#   - La informacion se envia a traves de Plugin Messaging de Minecraft.
+#   - Con cero jugadores en un backend, no hay mensajes hacia ese backend.
+#   - La informacion vuelve a sincronizarse cuando entra algun jugador.
+#   - Una capacidad configurada como 0 significa DESCONOCIDA, no ilimitada.
+#   - Conserva la indentacion con ESPACIOS; YAML no admite tabulaciones.
+#   - Los comentarios (#) son ayuda para el administrador.
+#   - Los backends nuevos se agregan sin borrar tu configuracion.
+#
+# =============================================================================
+
+config-version: 1
+
+# =============================================================================
+# 01. GENERAL
+# =============================================================================
+general:
+
+  # Idioma de los mensajes administrativos. Valores: es | en.
+  # No cambia las etiquetas de los placeholders, que son universales.
+  language: es
+
+  # Activa informacion adicional en consola para investigar incidencias.
+  # Desactivalo en condiciones normales para reducir el ruido de logs.
+  debug: false
+
+# =============================================================================
+# 02. SINCRONIZACION
+# =============================================================================
+synchronization:
+
+  # Canal predeterminado: tflonline:sync
+  # No necesita puertos adicionales y funciona con conexiones de jugadores.
+  transport: plugin-messaging
+
+  # Enviar un snapshot completo como respaldo cada X segundos.
+  # Rango: 1 a 60. Predeterminado: 3.
+  broadcast-interval-seconds: 3
+
+  # A partir de cuantos segundos sin mensajes un backend debe devolver N/A
+  # para contadores, en vez de mostrar valores posiblemente obsoletos.
+  # Debe ser mayor al intervalo de broadcast. Rango: 2 a 300.
+  cache-timeout-seconds: 15
+
+  # Propagar los cambios de jugadores sin esperar al siguiente broadcast.
+  # Para reducir spam, los eventos cercanos se agrupan (debounce).
+  broadcast-on-events: true
+
+  # Espera para agrupar multiples entradas, salidas o cambios de servidor.
+  # Rango: 0 a 2000 milisegundos.
+  event-debounce-millis: 150
+
+# =============================================================================
+# 03. DETECCION AUTOMATICA DE SERVIDORES
+# =============================================================================
+discovery:
+
+  # Escanea los servidores registrados en velocity.toml o config.yml del proxy.
+  # Revisa el registro al iniciar y durante las sincronizaciones.
+  auto-register: true
+
+  # Nunca eliminar automaticamente un backend previamente configurado.
+  # Si desaparece del proxy, se conserva su config para evitar perdida de datos.
+  preserve-missing: true
+
+# =============================================================================
+# 04. BARRAS DE OCUPACION
+# =============================================================================
+bars:
+  default:
+
+    # Cantidad total de caracteres de la barra (1 a 100).
+    segments: 20
+
+    # Caractéres de barra llena/vacia; admite caracteres Unicode.
+    # Para colores o gradientes usa el consumidor (TAB, menu, holograma).
+    # Los colores dentro del placeholder dependen del parser del receptor.
+    filled: "▌"
+    empty: "░"
+
+# =============================================================================
+# 05. GRUPOS DE SERVIDORES
+# =============================================================================
+#
+# Un GRUPO DE SERVIDORES suma los jugadores de varios backends.
+# NO es un rango o grupo de LuckPerms.
+#
+# Ejemplo:
+#   groups:
+#     survival:
+#       - skyblock
+#       - lifesteal
+#       - anarquico
+#
+# Placeholder: %tflonline_group:survival:online%
+# Los servidores inexistentes aportan 0 al grupo.
+# Un mismo backend no se cuenta dos veces aunque este repetido.
+# =============================================================================
+groups: {}
+
+# =============================================================================
+# 06. SERVIDORES
+# =============================================================================
+#
+# ESTA SECCION SE COMPLETA AUTOMATICAMENTE.
+# Se genera una entrada por cada backend registrado en el proxy.
+#
+# Ejemplo de entrada:
+#
+#   skyblock:
+#     alias: "skyblock"
+#     capacity: 100
+#     state: AUTO
+#
+# alias:      Nombre alternativo para placeholders (sin espacios).
+# capacity:   Capacidad para barras; 0 = desconocida.
+# state:      Etiqueta administrativa, reservada para futuras comprobaciones.
+#             Valores validos: AUTO, ONLINE, OFFLINE, MAINTENANCE,
+#             STARTING, UNKNOWN.
+#
+# No cambies el ID/clave de un servidor a menos que coincida exactamente con
+# el nombre registrado en tu proxy. Puedes cambiar el alias libremente.
+# Se conservan ajustes previos cuando agregas servidores al proxy.
+# =============================================================================
+servers: {}

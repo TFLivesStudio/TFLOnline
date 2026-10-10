@@ -6,7 +6,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-/** An immutable, single-version view of the network. */
 public record NetworkSnapshot(long revision, int total, Map<String, ServerSnapshot> servers,
                               Map<String, List<String>> groups, int barSegments,
                               String barFilled, String barEmpty, int cacheTimeoutSeconds) {

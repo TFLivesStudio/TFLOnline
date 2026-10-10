@@ -10,10 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Small, versioned binary protocol. Only trusted server connections may send REQUEST.
- * A malformed or oversized packet is rejected before entering the Paper cache.
- */
 public final class WireProtocol {
     public static final String CHANNEL = "tflonline:sync";
     private static final int MAGIC = 0x54464C4F;

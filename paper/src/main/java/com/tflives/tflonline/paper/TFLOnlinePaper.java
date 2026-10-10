@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class TFLOnlinePaper extends JavaPlugin implements Listener, PluginMessageListener {
     private final AtomicReference<CachedSnapshot> cache = new AtomicReference<>();
     private final byte[] request = WireProtocol.request();
+    private TFLOnlineExpansion expansion;
 
     @Override
     public void onEnable() {
@@ -24,15 +25,20 @@ public final class TFLOnlinePaper extends JavaPlugin implements Listener, Plugin
         Bukkit.getMessenger().registerOutgoingPluginChannel(this, WireProtocol.CHANNEL);
         Bukkit.getPluginManager().registerEvents(this, this);
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            new TFLOnlineExpansion(this).register();
-            getLogger().info("Registered %tflonline_...% expansion.");
+            expansion = new TFLOnlineExpansion(this);
+            if (expansion.register()) {
+                getLogger().info("Registered TFLOnline PlaceholderAPI expansion.");
+            } else {
+                getLogger().warning("Unable to register TFLOnline PlaceholderAPI expansion.");
+            }
         } else {
-            getLogger().warning("PlaceholderAPI is not installed; synchronization works, but no placeholders are available.");
+            getLogger().warning("PlaceholderAPI not detected. Install it to expose placeholders.");
         }
     }
 
     @Override
     public void onDisable() {
+        if (expansion != null) expansion.unregister();
         Bukkit.getMessenger().unregisterIncomingPluginChannel(this);
         Bukkit.getMessenger().unregisterOutgoingPluginChannel(this);
         cache.set(null);
@@ -40,8 +46,16 @@ public final class TFLOnlinePaper extends JavaPlugin implements Listener, Plugin
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        // Messaging uses the player's actual connection; no port or Redis needed.
-        event.getPlayer().sendPluginMessage(this, WireProtocol.CHANNEL, request);
+        Player player = event.getPlayer();
+        player.getScheduler().runDelayed(this, task -> {
+            if (player.isOnline()) player.sendPluginMessage(this, WireProtocol.CHANNEL, request);
+        }, null, 20L);
+        player.getScheduler().runDelayed(this, task -> {
+            CachedSnapshot current = cache.get();
+            if (player.isOnline() && (current == null || !current.isFresh())) {
+                player.sendPluginMessage(this, WireProtocol.CHANNEL, request);
+            }
+        }, null, 80L);
     }
 
     @Override
@@ -49,9 +63,14 @@ public final class TFLOnlinePaper extends JavaPlugin implements Listener, Plugin
         if (!WireProtocol.CHANNEL.equals(channel)) return;
         try {
             NetworkSnapshot snapshot = WireProtocol.decode(message);
-            cache.set(new CachedSnapshot(snapshot, System.nanoTime()));
+            long now = System.nanoTime();
+            cache.updateAndGet(previous -> {
+                if (previous != null && previous.isFresh()
+                        && snapshot.revision() < previous.snapshot().revision()) return previous;
+                return new CachedSnapshot(snapshot, now);
+            });
         } catch (IOException | IllegalArgumentException ex) {
-            getLogger().warning("Rejected invalid proxy sync packet: " + ex.getMessage());
+            getLogger().warning("Rejected invalid sync packet: " + ex.getMessage());
         }
     }
 
@@ -65,7 +84,8 @@ public final class TFLOnlinePaper extends JavaPlugin implements Listener, Plugin
         }
 
         public boolean isFresh() {
-            return TimeUnit.NANOSECONDS.toSeconds(Math.max(0, System.nanoTime() - receivedAtNanos)) < snapshot.cacheTimeoutSeconds();
+            return TimeUnit.NANOSECONDS.toSeconds(Math.max(0, System.nanoTime() - receivedAtNanos))
+                    < snapshot.cacheTimeoutSeconds();
         }
     }
 }
