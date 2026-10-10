@@ -1,0 +1,8 @@
+name: TFLOnline
+version: 0.1.0-SNAPSHOT
+main: com.tflives.tflonline.paper.TFLOnlinePaper
+api-version: '1.20'
+folia-supported: true
+authors: [TFLivesStudio]
+softdepend: [PlaceholderAPI]
+description: Network-wide online placeholders synced through the proxy.
