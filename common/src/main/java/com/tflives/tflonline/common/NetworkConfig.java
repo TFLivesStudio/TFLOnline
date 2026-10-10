@@ -73,7 +73,8 @@ public final class NetworkConfig {
         return new NetworkSnapshot(revision, total, servers, groups,
                 integer("bar.segments", 20, 1, 100),
                 props.getProperty("bar.filled", "▌"),
-                props.getProperty("bar.empty", "░"));
+                props.getProperty("bar.empty", "░"),
+                integer("cache.timeout.seconds", 15, 2, 300));
     }
 
     public synchronized int syncSeconds() {

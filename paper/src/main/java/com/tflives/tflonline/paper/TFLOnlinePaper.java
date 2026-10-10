@@ -65,7 +65,7 @@ public final class TFLOnlinePaper extends JavaPlugin implements Listener, Plugin
         }
 
         public boolean isFresh() {
-            return TimeUnit.NANOSECONDS.toSeconds(Math.max(0, System.nanoTime() - receivedAtNanos)) < 15;
+            return TimeUnit.NANOSECONDS.toSeconds(Math.max(0, System.nanoTime() - receivedAtNanos)) < snapshot.cacheTimeoutSeconds();
         }
     }
 }

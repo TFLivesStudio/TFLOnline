@@ -9,9 +9,9 @@ import java.util.Objects;
 /** An immutable, single-version view of the network. */
 public record NetworkSnapshot(long revision, int total, Map<String, ServerSnapshot> servers,
                               Map<String, List<String>> groups, int barSegments,
-                              String barFilled, String barEmpty) {
+                              String barFilled, String barEmpty, int cacheTimeoutSeconds) {
     public NetworkSnapshot {
-        if (revision < 0 || total < 0 || barSegments < 1 || barSegments > 100) {
+        if (revision < 0 || total < 0 || barSegments < 1 || barSegments > 100 || cacheTimeoutSeconds < 2 || cacheTimeoutSeconds > 300) {
             throw new IllegalArgumentException("Invalid snapshot header");
         }
         Objects.requireNonNull(servers, "servers");

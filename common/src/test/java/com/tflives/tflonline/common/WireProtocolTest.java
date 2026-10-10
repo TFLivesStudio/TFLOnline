@@ -12,12 +12,13 @@ class WireProtocolTest {
     private final NetworkSnapshot sample = new NetworkSnapshot(4, 17, Map.of(
             "lobby1", new ServerSnapshot("lobby", 7, 25, "AUTO"),
             "skyblock", new ServerSnapshot("skyblock", 10, 20, "MAINTENANCE")
-    ), Map.of("lobbies", List.of("lobby1"), "survival", List.of("skyblock")), 10, "▌", "░");
+    ), Map.of("lobbies", List.of("lobby1"), "survival", List.of("skyblock")), 10, "▌", "░", 15);
 
     @Test void roundTrip() throws Exception {
         NetworkSnapshot read = WireProtocol.decode(WireProtocol.encode(sample));
         assertEquals(sample, read);
         assertEquals(17, read.total());
+        assertEquals(15, read.cacheTimeoutSeconds());
         assertEquals(7, read.findServer("lobby").players());
         assertEquals(10, read.groupCount("survival"));
         assertEquals("▌▌▌▌▌░░░░░", read.bar("skyblock"));
@@ -39,7 +40,7 @@ class WireProtocolTest {
     @Test void groupAliasesDeduplicate() {
         NetworkSnapshot s = new NetworkSnapshot(1, 2,
                 Map.of("hub1", new ServerSnapshot("lobby", 2, 0, "AUTO")),
-                Map.of("lobbies", List.of("hub1", "lobby")), 4, "█", "░");
+                Map.of("lobbies", List.of("hub1", "lobby")), 4, "█", "░", 15);
         assertEquals(2, s.groupCount("lobbies"));
         assertNull(s.bar("hub1"));
     }

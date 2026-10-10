@@ -38,6 +38,7 @@ The proxy creates the file automatically, with keys including:
 
 ```properties
 sync.seconds=2
+cache.timeout.seconds=15
 bar.segments=20
 bar.filled=▌
 bar.empty=░
@@ -81,7 +82,7 @@ JARs are produced under `velocity/build/libs/`, `bungee/build/libs/` and `paper/
 - Only **single-proxy** counting; Redis/multi-proxy federation is **not implemented**.
 - No LuckPerms group counts, Geyser/Floodgate platform splits, ping/status checks, per-group ranks, color formatting, admin commands, live reload, localization or release automation **yet**.
 - Plugin messages require an existing player connection to the backend. A backend with no players will not receive updates, but a new join requests a fresh snapshot. There is also a periodic broadcast while players are present.
-- The backend cache is currently considered stale after **15 seconds** without an update. This duration is currently fixed in the Paper adapter.
+- The backend cache expires after the **configurable** `cache.timeout.seconds` without an update (default: 15 seconds; range: 2–300). The proxy distributes this setting in each snapshot.
 - A malicious/untrusted backend plugin may submit false data or disrupt messaging; **secure your backend-to-proxy forwarding setup**. Our proxy adapter handles its own channel and does not forward client-origin messages.
 - This snapshot is designed to compile against Paper API 1.20.4, Velocity API 3.3.0 and Bungee API 1.21. Extensive cross-version/Folia/fork compatibility tests are still needed.
 

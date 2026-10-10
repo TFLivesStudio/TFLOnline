@@ -56,6 +56,7 @@ public final class WireProtocol {
             out.writeInt(snap.barSegments());
             out.writeUTF(snap.barFilled());
             out.writeUTF(snap.barEmpty());
+            out.writeInt(snap.cacheTimeoutSeconds());
             out.writeShort(snap.servers().size());
             for (var entry : snap.servers().entrySet()) {
                 out.writeUTF(entry.getKey());
@@ -90,6 +91,7 @@ public final class WireProtocol {
             int segments = in.readInt();
             String filled = in.readUTF();
             String empty = in.readUTF();
+            int timeoutSeconds = in.readInt();
             int serverCount = in.readUnsignedShort();
             if (serverCount > MAX_SERVERS) throw new IOException("Too many servers");
             Map<String, ServerSnapshot> servers = new LinkedHashMap<>();
@@ -115,7 +117,7 @@ public final class WireProtocol {
             }
             if (in.available() != 0) throw new IOException("Trailing data");
             try {
-                return new NetworkSnapshot(revision, total, servers, groups, segments, filled, empty);
+                return new NetworkSnapshot(revision, total, servers, groups, segments, filled, empty, timeoutSeconds);
             } catch (IllegalArgumentException ex) {
                 throw new IOException("Invalid snapshot data", ex);
             }

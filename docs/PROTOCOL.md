@@ -27,6 +27,7 @@ i32 total
 i32 barSegments
 UTF filledCharacter
 UTF emptyCharacter
+i32 cacheTimeoutSeconds
 u16 serverCount
 repeat serverCount:
   UTF proxyServerId
