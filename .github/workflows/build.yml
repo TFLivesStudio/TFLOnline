@@ -3,36 +3,103 @@ name: Build & Test
 on:
   push:
     branches: [main, 'feat/**', 'fix/**']
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Java 17
+      - uses: actions/checkout@v4
+      - name: Install Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - name: Set up Gradle
+      - name: Set up Gradle 8.14.3
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.14.3'
-      - name: Build and test
-        run: gradle clean build --stacktrace
-      - name: Upload JARs
-        if: success()
+      - name: Build and run tests
+        run: gradle clean build --no-daemon --stacktrace
+      - name: Verify executable plugin JARs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for module in velocity bungee paper; do
+            jarfile=$(find "$module/build/libs" -maxdepth 1 -type f -name "TFLOnline-*.jar" ! -name "*sources*" | head -n1)
+            test -n "$jarfile"
+            test -s "$jarfile"
+            listing=$(mktemp)
+            jar tf "$jarfile" > "$listing"
+            echo "Checking $jarfile (size $(stat -c%s "$jarfile") bytes)"
+            grep -E "(velocity-plugin|Yaml.class|WireProtocol.class|bungee.yml|plugin.yml)" "$listing" || true
+            grep -Fq "com/tflives/tflonline/common/WireProtocol.class" "$listing"
+            grep -Fq "com/tflives/tflonline/libs/yaml/Yaml.class" "$listing"
+            if [[ "$module" == velocity ]]; then
+              grep -Fq "velocity-plugin.json" "$listing"
+            elif [[ "$module" == bungee ]]; then
+              grep -Fq "bungee.yml" "$listing"
+            else
+              grep -Fq "plugin.yml" "$listing"
+              grep -Fq "com/tflives/tflonline/paper/TFLOnlineExpansion.class" "$listing"
+            fi
+            rm -f "$listing"
+            echo "OK: $jarfile"
+          done
+      - name: Publish Velocity build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tflonline-snapshot
-          path: |
+          name: TFLOnline-Velocity-JAR
+          path: velocity/build/libs/TFLOnline-Velocity-*.jar
+          if-no-files-found: error
+      - name: Publish Bungee build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TFLOnline-Bungee-JAR
+          path: bungee/build/libs/TFLOnline-Bungee-*.jar
+          if-no-files-found: error
+      - name: Publish Paper build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TFLOnline-Paper-JAR
+          path: paper/build/libs/TFLOnline-Paper-*.jar
+          if-no-files-found: error
+      - name: Prepare SHA-256 checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > SHA256SUMS.txt
+          for jar in velocity/build/libs/TFLOnline-Velocity-*.jar bungee/build/libs/TFLOnline-Bungee-*.jar paper/build/libs/TFLOnline-Paper-*.jar; do
+            hash=$(sha256sum "$jar" | cut -d' ' -f1)
+            printf '%s  %s\n' "$hash" "$(basename "$jar")" >> SHA256SUMS.txt
+          done
+      - name: Publish versioned GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
             velocity/build/libs/TFLOnline-Velocity-*.jar
             bungee/build/libs/TFLOnline-Bungee-*.jar
             paper/build/libs/TFLOnline-Paper-*.jar
-          if-no-files-found: error
+            SHA256SUMS.txt
+
+      - name: Publish downloadable development release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: dev-${{ github.run_number }}
+          name: TFLOnline Development Build ${{ github.run_number }}
+          prerelease: true
+          generate_release_notes: false
+          body: "Automatic development build. Tests passed; runtime compatibility must still be verified on staging."
+          files: |
+            velocity/build/libs/TFLOnline-Velocity-*.jar
+            bungee/build/libs/TFLOnline-Bungee-*.jar
+            paper/build/libs/TFLOnline-Paper-*.jar
+            SHA256SUMS.txt

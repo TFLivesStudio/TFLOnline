@@ -1,93 +1,95 @@
 # TFLOnline
 
-**Cross-server player counts for Minecraft proxies, delivered to PlaceholderAPI — no additional port or Redis required in the default installation.**
+TFLOnline is a Minecraft network player-counter project by **tflives**, licensed under **GPL-3.0**.
 
-> **Development status: 0.1.0-SNAPSHOT / experimental bootstrap.** This is the first functional foundation, **not** the feature-complete V1. Do not deploy to a production network without testing it on a staging proxy and backends first.
+The initial installation uses Minecraft's existing Plugin Messaging connection. **No extra listener port, database or Redis is required.**
 
-TFLOnline is GPL-3.0-licensed and developed by [TFLivesStudio](https://github.com/TFLivesStudio).
+> **Status: 0.2.0-SNAPSHOT (public testing).** Compilation and unit tests do not replace live tests on Velocity, BungeeCord, Paper, forks or Folia. Features marked as planned are not yet implemented.
 
-## Install (initial snapshot)
+## Downloads
 
-1. Put **TFLOnline-Velocity.jar** in your Velocity (or API-compatible fork) `plugins/` folder, **or** **TFLOnline-Bungee.jar** in BungeeCord/Waterfall `plugins/`.
-2. Put **TFLOnline-Paper.jar** in the `plugins/` folder of every Paper/Purpur backend where you want PlaceholderAPI values.
-3. Install PlaceholderAPI on those backends, then restart the proxy and servers.
-4. The proxy generates `plugins/tflonline/tflonline.properties` (actual folder depends on platform). It automatically lists the backend servers registered with the proxy.
-5. Edit capacities, aliases and optional server groups in the **proxy** configuration, then **restart the proxy for this initial snapshot**. Live config reload is planned but is not implemented yet.
+- **GitHub Actions:** open the most recent successful [Build & Test](https://github.com/TFLivesStudio/TFLOnline/actions/workflows/build.yml). The artifacts are named `TFLOnline-Velocity-JAR`, `TFLOnline-Bungee-JAR`, and `TFLOnline-Paper-JAR`. GitHub downloads Actions artifacts as **ZIP archives**. Extract each ZIP to obtain its executable `.jar`.
+- **GitHub Releases:** every successful push to `main` publishes a development **prerelease with the three individual JAR files**. A tag like `v0.2.0` runs CI and, if all tests succeed, publishes **three individual executable JAR files** plus `SHA256SUMS.txt` on the [Releases page](https://github.com/TFLivesStudio/TFLOnline/releases). Regular feature-branch CI artifacts are ZIP wrappers; development Releases expose the JAR files directly.
 
-No database and **no extra listener port** are created. Communication uses Minecraft's existing plugin message channel `tflonline:sync`.
+### Which JAR goes where?
+
+| Platform | Install |
+|---|---|
+| Velocity and compatible forks | `TFLOnline-Velocity-<version>.jar` into proxy `plugins/` |
+| BungeeCord/Waterfall | `TFLOnline-Bungee-<version>.jar` into proxy `plugins/` |
+| Paper/Purpur/Folia | `TFLOnline-Paper-<version>.jar` into each backend `plugins/` |
+
+The **Paper component is a normal plugin**. It registers its PlaceholderAPI expansion automatically when PlaceholderAPI is installed. **Do not** put the Paper JAR in `plugins/PlaceholderAPI/expansions/`.
+
+Use **one proxy adapter**, Velocity or Bungee, never both on the same proxy. Backends must be protected from direct public access because plugin messages presume the proxy is trusted.
+
+## Installation
+
+1. Install the correct proxy JAR and the Paper JAR on each backend where placeholders are needed.
+2. Install PlaceholderAPI in those Paper backends.
+3. Restart the proxy and backends.
+4. TFLOnline creates `plugins/tflonline/config.yml` in Velocity's data directory or `plugins/TFLOnline/config.yml` under BungeeCord (folder casing may depend on your proxy).
+5. Registered backends are automatically appended to `servers:` without overwriting existing settings.
+6. Edit the thoroughly documented `config.yml` **on the proxy only**, then run `/tflonline reload`.
+
+Existing `tflonline.properties` installations are migrated automatically when `config.yml` does not exist. The old file is preserved.
 
 ### Available placeholders
 
-| Placeholder | Result |
-| --- | --- |
-| `%tflonline_total%` | Total players on this proxy |
-| `%tflonline_server:lobby:online%` | Connected players on registered backend `lobby` |
-| `%tflonline_server:skyblock:online%` | Connected players on `skyblock` |
-| `%tflonline_group:survival:online%` | Sum for a **configured group of servers** named `survival` |
-| `%tflonline_bar:skyblock%` | Text progress bar of players / configured capacity |
-| `%tflonline_sync_status%` | `WAITING`, `CONNECTED` or `STALE` |
-| `%tflonline_sync_age%` | Seconds since last valid snapshot (`-1` before first sync) |
+| Placeholder | Purpose |
+|---|---|
+| `%tflonline_total%` | Players connected to the proxy |
+| `%tflonline_server:skyblock:online%` | Players connected to a backend |
+| `%tflonline_group:survival:online%` | Sum of the configured group of **backends** |
+| `%tflonline_bar:skyblock%` | Occupancy bar (requires a positive capacity) |
+| `%tflonline_server:skyblock:capacity%` | Configured capacity (0 = unknown) |
+| `%tflonline_server:skyblock:state%` | Administrator-configured state, not a live reachability result |
+| `%tflonline_sync_status%` | `WAITING`, `CONNECTED`, `STALE` |
+| `%tflonline_sync_age%` | Age in seconds of the last snapshot |
 
-A missing server/group/capacity or stale snapshot yields `N/A`, not a misleading zero. `sync_status` and `sync_age` remain queryable when sync is unavailable.
+`%tflonline_group:...%` does **not** refer to LuckPerms ranks. Rank counts, Java/Bedrock split, health/ping and Redis federation are still planned and are not advertised as working.
 
-**Group in this snapshot means a group of backends, not a LuckPerms rank.** LuckPerms rank counts will have a separate placeholder namespace when implemented.
+Missing or stale data returns `N/A`. Zero always means a **valid measured count of zero**.
 
-### Example proxy configuration
+### Proxy commands
 
-The proxy creates the file automatically, with keys including:
+Requires `tflonline.admin` (or console access):
 
-```properties
-sync.seconds=2
-cache.timeout.seconds=15
-bar.segments=20
-bar.filled=▌
-bar.empty=░
-server.lobby.alias=lobby
-server.lobby.capacity=100
-server.lobby.state=AUTO
-server.skyblock.alias=skyblock
-server.skyblock.capacity=200
-server.skyblock.state=AUTO
-group.survival=skyblock,lifesteal
-```
+- `/tflonline status`
+- `/tflonline servers`
+- `/tflonline groups`
+- `/tflonline sync`
+- `/tflonline reload`
+- `/tflonline debug`
 
-- `sync.seconds` affects recurring broadcasts; an immediate snapshot is also requested when a player joins the backend.
-- New proxy-registered servers get default entries on the next discovery pass. Existing custom keys are not overwritten.
-- The `state` key is **reserved for a later release**; V0.1 does not ping backends or expose status placeholders.
-- Set a positive `capacity` to enable `bar:<server>`. `0` means unknown capacity.
+Messages support Spanish and English using `general.language`. Placeholder values are numbers, statuses or bar characters rather than styled chat messages.
 
-## Components
+## Configuration
 
-```text
-common/    Immutable snapshots, proxy configuration, versioned wire protocol and tests
-velocity/  Proxy API adapter for Velocity and compatible forks
-bungee/    BungeeCord/Waterfall proxy adapter
-paper/     Bukkit/Paper/Folia adapter; built-in PlaceholderAPI expansion
-```
+See [config.yml reference](docs/CONFIGURATION.md) and the complete heavily commented [default template](common/src/main/resources/tflonline-config.yml).
 
-The Paper module is a **normal server plugin**. Do **not** copy it into `plugins/PlaceholderAPI/expansions/`; it registers its PAPI expansion internally when PlaceholderAPI is installed.
+### Communication limits
+
+Plugin Messaging only traverses existing player connections. Empty backends cannot receive updates; the Paper plugin requests synchronization after a player joins, and the proxy periodically broadcasts to occupied backends. Presentation may take additional seconds due to the refresh interval of your scoreboard, TAB, DeluxeMenus or hologram plugin.
+
+There is no extra listener, TCP service or Redis client in the current snapshot. Multi-proxy aggregation, protocol encryption, LuckPerms counting and Bedrock/Java splits are not present yet.
 
 ## Build
 
-Requirements: **JDK 17** and **Gradle 8.14+** installed for local builds. Later Minecraft server versions may require a newer Java runtime even though the project's bytecode target is Java 17.
+Gradle 8.14.3 and JDK 17 are used in CI. Target bytecode is Java 17. Newer Minecraft releases can require newer Java runtimes.
 
 ```bash
 gradle clean build
 ```
 
-JARs are produced under `velocity/build/libs/`, `bungee/build/libs/` and `paper/build/libs/`. GitHub Actions runs `gradle clean build` and uploads the JARs as CI artifacts for commits/PRs.
+The executable, shaded JARs are built in `velocity/build/libs/`, `bungee/build/libs/` and `paper/build/libs/`. The build verifies shaded SnakeYAML and plugin metadata before uploading the separate JAR artifacts.
 
-## Important limitations of the bootstrap
+A tag of the form `vX.Y.Z` starts release creation after successful verification; the tag version should match the version used by the build before publication.
 
-- Only **single-proxy** counting; Redis/multi-proxy federation is **not implemented**.
-- No LuckPerms group counts, Geyser/Floodgate platform splits, ping/status checks, per-group ranks, color formatting, admin commands, live reload, localization or release automation **yet**.
-- Plugin messages require an existing player connection to the backend. A backend with no players will not receive updates, but a new join requests a fresh snapshot. There is also a periodic broadcast while players are present.
-- The backend cache expires after the **configurable** `cache.timeout.seconds` without an update (default: 15 seconds; range: 2–300). The proxy distributes this setting in each snapshot.
-- A malicious/untrusted backend plugin may submit false data or disrupt messaging; **secure your backend-to-proxy forwarding setup**. Our proxy adapter handles its own channel and does not forward client-origin messages.
-- This snapshot is designed to compile against Paper API 1.20.4, Velocity API 3.3.0 and Bungee API 1.21. Extensive cross-version/Folia/fork compatibility tests are still needed.
+## Design and roadmap
 
-See [Roadmap](docs/ROADMAP.md) and [Protocol](docs/PROTOCOL.md) for the design decisions and upcoming milestones.
+- [Protocol](docs/PROTOCOL.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Configuration](docs/CONFIGURATION.md)
 
-## License
-
-GPL-3.0 — see [LICENSE](LICENSE).
+Copyright tflives and contributors. Distributed under [GPL-3.0](LICENSE).

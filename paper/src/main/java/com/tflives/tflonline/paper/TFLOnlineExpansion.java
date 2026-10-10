@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-/** PAPI parser is a pure, allocation-light read of the latest validated snapshot. */
 public final class TFLOnlineExpansion extends PlaceholderExpansion {
     private final TFLOnlinePaper plugin;
 
@@ -17,7 +16,7 @@ public final class TFLOnlineExpansion extends PlaceholderExpansion {
     }
 
     @Override public @NotNull String getIdentifier() { return "tflonline"; }
-    @Override public @NotNull String getAuthor() { return "TFLivesStudio"; }
+    @Override public @NotNull String getAuthor() { return "tflives"; }
     @Override public @NotNull String getVersion() { return plugin.getDescription().getVersion(); }
     @Override public boolean persist() { return true; }
 
@@ -35,12 +34,21 @@ public final class TFLOnlineExpansion extends PlaceholderExpansion {
         NetworkSnapshot snapshot = cache.snapshot();
         if ("total".equals(key)) return String.valueOf(snapshot.total());
 
-        // Names may contain underscores. Colon delimiters avoid ambiguity.
         String[] segments = params.split(":", -1);
         if (segments.length == 3 && segments[0].equalsIgnoreCase("server")
                 && segments[2].equalsIgnoreCase("online")) {
             ServerSnapshot server = snapshot.findServer(segments[1]);
             return server == null ? "N/A" : String.valueOf(server.players());
+        }
+        if (segments.length == 3 && segments[0].equalsIgnoreCase("server")
+                && segments[2].equalsIgnoreCase("state")) {
+            ServerSnapshot server = snapshot.findServer(segments[1]);
+            return server == null ? "N/A" : server.state();
+        }
+        if (segments.length == 3 && segments[0].equalsIgnoreCase("server")
+                && segments[2].equalsIgnoreCase("capacity")) {
+            ServerSnapshot server = snapshot.findServer(segments[1]);
+            return server == null ? "N/A" : String.valueOf(server.capacity());
         }
         if (segments.length == 3 && segments[0].equalsIgnoreCase("group")
                 && segments[2].equalsIgnoreCase("online")) {

@@ -1,5 +1,5 @@
 name: TFLOnline
 main: com.tflives.tflonline.bungee.TFLOnlineBungee
-version: 0.1.0-SNAPSHOT
-author: TFLivesStudio
-description: Network-wide online counters via plugin messaging.
+version: 0.2.0-SNAPSHOT
+author: tflives
+description: Network-wide online counters via Plugin Messaging.
