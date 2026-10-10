@@ -82,4 +82,26 @@ class NetworkConfigTest {
         assertEquals(8, migrated.snapshot(1, 8, Map.of("lobby", 8)).groupCount("hubs"));
         assertTrue(Files.exists(temp.resolve("tflonline.properties")));
     }
+    @Test
+    void doesNotCreateConflictingAliasesOnDiscovery() throws Exception {
+        NetworkConfig config = new NetworkConfig(temp);
+        config.discover(List.of("hub"));
+        Path file = temp.resolve("config.yml");
+        Files.writeString(file, Files.readString(file).replace("alias: \"hub\"", "alias: \"lobby\""));
+        config.reload();
+        config.discover(List.of("hub", "lobby"));
+        NetworkSnapshot snapshot = config.snapshot(1, 3, Map.of("hub", 1, "lobby", 2));
+        assertEquals(1, snapshot.findServer("hub").players());
+        assertEquals(2, snapshot.findServer("lobby").players());
+        assertEquals(2, snapshot.findServer("lobby-2").players());
+    }
+
+    @Test
+    void rejectsUnsupportedAutomaticDeletion() throws Exception {
+        NetworkConfig config = new NetworkConfig(temp);
+        Path file = temp.resolve("config.yml");
+        Files.writeString(file, Files.readString(file).replace("preserve-missing: true", "preserve-missing: false"));
+        assertThrows(IOException.class, config::reload);
+    }
+
 }

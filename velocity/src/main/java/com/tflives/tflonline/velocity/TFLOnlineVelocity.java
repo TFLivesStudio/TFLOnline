@@ -3,6 +3,7 @@ package com.tflives.tflonline.velocity;
 import com.google.inject.Inject;
 import com.tflives.tflonline.common.Messages;
 import com.tflives.tflonline.common.NetworkConfig;
+import com.tflives.tflonline.common.RequestThrottle;
 import com.tflives.tflonline.common.WireProtocol;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.Subscribe;
@@ -35,6 +36,7 @@ public final class TFLOnlineVelocity {
     private final Logger logger;
     private final Path directory;
     private final AtomicLong revision = new AtomicLong();
+    private final RequestThrottle requestThrottle = new RequestThrottle(500);
     private final AtomicBoolean eventQueued = new AtomicBoolean();
     private volatile long nextBroadcastNanos;
     private volatile NetworkConfig config;
@@ -82,7 +84,10 @@ public final class TFLOnlineVelocity {
         if (!CHANNEL.equals(event.getIdentifier())) return;
         event.setResult(PluginMessageEvent.ForwardResult.handled());
         if (config == null || !(event.getSource() instanceof ServerConnection connection)) return;
-        if (WireProtocol.isRequest(event.getData())) sendTo(connection.getServer());
+        if (WireProtocol.isRequest(event.getData())
+                && requestThrottle.allow(connection.getServer().getServerInfo().getName())) {
+            sendTo(connection.getServer());
+        }
     }
 
     private void queueEvent() {

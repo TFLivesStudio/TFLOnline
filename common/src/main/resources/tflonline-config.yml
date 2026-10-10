@@ -78,8 +78,8 @@ discovery:
   # Revisa el registro al iniciar y durante las sincronizaciones.
   auto-register: true
 
-  # Nunca eliminar automaticamente un backend previamente configurado.
-  # Si desaparece del proxy, se conserva su config para evitar perdida de datos.
+  # Seguridad: debe mantenerse en true. La eliminacion automatica no esta
+  # soportada para evitar perder alias y ajustes durante caidas del proxy.
   preserve-missing: true
 
 # =============================================================================

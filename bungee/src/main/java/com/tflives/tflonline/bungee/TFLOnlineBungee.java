@@ -2,6 +2,7 @@ package com.tflives.tflonline.bungee;
 
 import com.tflives.tflonline.common.Messages;
 import com.tflives.tflonline.common.NetworkConfig;
+import com.tflives.tflonline.common.RequestThrottle;
 import com.tflives.tflonline.common.WireProtocol;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.Server;
@@ -24,6 +25,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class TFLOnlineBungee extends Plugin implements Listener {
     private volatile NetworkConfig config;
     private final AtomicLong revision = new AtomicLong();
+    private final RequestThrottle requestThrottle = new RequestThrottle(500);
     private final AtomicBoolean eventQueued = new AtomicBoolean();
     private volatile long nextBroadcastNanos;
 
@@ -54,7 +56,10 @@ public final class TFLOnlineBungee extends Plugin implements Listener {
         if (!WireProtocol.CHANNEL.equals(event.getTag())) return;
         event.setCancelled(true);
         if (config == null || !(event.getSender() instanceof Server server)) return;
-        if (WireProtocol.isRequest(event.getData())) sendTo(server.getInfo());
+        if (WireProtocol.isRequest(event.getData())
+                && requestThrottle.allow(server.getInfo().getName())) {
+            sendTo(server.getInfo());
+        }
     }
 
     @EventHandler

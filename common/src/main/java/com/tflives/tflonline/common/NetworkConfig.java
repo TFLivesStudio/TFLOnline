@@ -56,9 +56,23 @@ public final class NetworkConfig {
         if (newNames.isEmpty()) return;
         String current = Files.readString(file, StandardCharsets.UTF_8);
         StringBuilder additions = new StringBuilder();
+        Set<String> usedAliases = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        for (ServerSetting setting : settings.servers().values()) usedAliases.add(setting.alias());
+        Set<String> reservedIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        reservedIds.addAll(settings.servers().keySet());
+        reservedIds.addAll(registered);
         for (String name : newNames) {
+            String alias = name;
+            if (usedAliases.contains(alias)) {
+                String base = name.substring(0, Math.min(name.length(), 55));
+                int index = 2;
+                do {
+                    alias = base + "-" + index++;
+                } while (usedAliases.contains(alias) || reservedIds.contains(alias));
+            }
+            usedAliases.add(alias);
             additions.append("  ").append(name).append(":\n")
-                    .append("    alias: \"").append(name).append("\"\n")
+                    .append("    alias: \"").append(alias).append("\"\n")
                     .append("    capacity: 0\n")
                     .append("    state: AUTO\n\n");
         }
@@ -223,7 +237,9 @@ public final class NetworkConfig {
             int debounce = integer(sync.get("event-debounce-millis"), 150, 0, 2000, "synchronization.event-debounce-millis");
             Map<String, Object> discovery = mapping(root.get("discovery"), "discovery");
             boolean auto = bool(discovery.get("auto-register"), true, "discovery.auto-register");
-            bool(discovery.get("preserve-missing"), true, "discovery.preserve-missing");
+            if (!bool(discovery.get("preserve-missing"), true, "discovery.preserve-missing")) {
+                throw new IllegalArgumentException("Automatic deletion is not supported; preserve-missing must be true");
+            }
             Map<String, Object> bar = mapping(mapping(root.get("bars"), "bars").get("default"), "bars.default");
             int segments = integer(bar.get("segments"), 20, 1, 100, "bars.default.segments");
             String filled = string(bar.get("filled"), "▌", "bars.default.filled");
