@@ -10,11 +10,11 @@ This document records the intended public V1 and clearly separates it from imple
 - Default transport: Minecraft plugin messaging, **zero additional listener ports**.
 - Redis: optional transport for independent synchronization/multiple proxies; never mandatory for a single proxy.
 - Configuration and server auto-discovery: on proxy; preserve customized settings when new servers are added.
-- Languages: Spanish and English, configurable messages supporting legacy, &#RRGGBB and MiniMessage as appropriate to each output consumer.
+- Languages: Spanish/English command messages are implemented; Legacy, Hex and MiniMessage formatting remains planned where supported by each consumer.
 - License: GPL-3.0. Gradle monorepo, GitHub Actions build and release automation.
 - Operational philosophy: non-blocking I/O, bounded messages, bounded caches, explicit stale state, no network operations inside placeholder evaluation.
 
-## Implemented in 0.1.0 bootstrap
+## Implemented through 0.2.0-SNAPSHOT
 
 - Shared immutable snapshots and versioned protocol with validation.
 - Automatic discovery of registered backend names on each proxy.
@@ -23,7 +23,11 @@ This document records the intended public V1 and clearly separates it from imple
 - Online counts (total/backend), configurable groups of servers and occupancy bars.
 - Periodic proxy broadcasts and backend join-time sync requests.
 - Defensive packet handling and unit tests.
-- Initial CI compilation/test workflow.
+- Migratable, annotated proxy config.yml with strict YAML validation and atomic writes.
+- Velocity/Bungee administration commands, permission checks and live configuration reload.
+- Debounced event-driven updates, rate-limited backend sync requests and Folia-aware join retries.
+- Three verified shaded JARs, CI artifacts, development prereleases and tagged version releases.
+- JUnit regression tests covering configuration, protocol, malformed frames, migration and aliases.
 
 ## Work remaining before stable V1
 
@@ -31,10 +35,8 @@ This document records the intended public V1 and clearly separates it from imple
 
 - Compile and test both proxy adapters across supported API versions and fork families.
 - Folia thread-affinity and backend join/reconnect integration tests.
-- Proxy hot reload and commands: `/tflonline status|servers|groups|sync|reload|debug`.
-- Localized command messages, proxy permissions, safe file writes and configuration migration.
-- Configuration schema and aliases with explicit validation.
-- Debounced event-driven broadcasts and observable sync metrics.
+- Full per-server integration tests of reload, reconnects, event propagation and permissions.
+- Additional sync metrics and diagnostics beyond the basic status commands.
 - Connection loss, malformed packet, large network and switching-server soak tests.
 
 ### Phase 2 — rank/platform data
@@ -56,7 +58,7 @@ This document records the intended public V1 and clearly separates it from imple
 
 - Optional Redis pub/sub with snapshot replay, unique proxy IDs, lease expiry and player deduplication.
 - Distributed global totals with multi-proxy failover tests.
-- Signed-tag GitHub Releases for three JARs, checksums and automated changelog.
+- Release signatures and reproducible-build verification; checksums, JAR publication and release notes are already automated.
 - Complete English/Spanish documentation, test matrix and performance benchmarks.
 
 ## Defined semantics

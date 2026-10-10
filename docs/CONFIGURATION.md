@@ -68,8 +68,8 @@ servers:
 - `servers.*.capacity`: nonnegative integer; `0` disables occupancy-bar output.
 - All aliases must be unique, without whitespace.
 - Backend names must match names registered in Velocity/BungeeCord.
-- `servers.*.state` is **stored administrative metadata**, not a live ping or status placeholder yet.
-- `discovery.preserve-missing` is advisory in the current version; entries are always preserved.
+- `servers.*.state` is **administrative metadata** available as `%tflonline_server:<id>:state%`, not a live reachability test.
+- `discovery.preserve-missing` must remain `true`; `false` is rejected to prevent accidental loss of customized backends.
 - Invalid reloads preserve the previously loaded valid settings in memory.
 
 The scanner appends newly discovered backends without rebuilding the entire YAML file, so the original section headings and user comments remain intact.
