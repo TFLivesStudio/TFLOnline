@@ -125,7 +125,7 @@ public final class NetworkConfig {
                 additions.append("  ").append(entry.getKey()).append(":\n")
                         .append("    alias: \"").append(yamlQuote(values.getOrDefault("alias", entry.getKey()))).append("\"\n")
                         .append("    capacity: ").append(validInt(values.get("capacity"), 0, 0, Integer.MAX_VALUE)).append("\n")
-                        .append("    state: ").append(validState(values.get("state"))).append("\n\n");
+                        .append("    state: ").append(validState(values.getOrDefault("state", "AUTO"))).append("\n\n");
             }
             translated = insertEntries(translated, "servers", additions.toString());
         }
