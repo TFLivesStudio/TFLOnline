@@ -153,7 +153,11 @@ public final class NetworkConfig {
 
     private static String replaceQuoted(String source, String name, String value) {
         if (value == null || value.isBlank()) return source;
-        return source.replaceFirst("(?m)^(\\s*" + name + ":\\s*)[^\\r\\n]+$", "$1\"" + yamlQuote(value) + "\"");
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("(?m)^(\\s*" + name + ":\\s*)[^\\r\\n]+$")
+                .matcher(source);
+        if (!matcher.find()) return source;
+        return matcher.replaceFirst("$1" + java.util.regex.Matcher.quoteReplacement("\"" + yamlQuote(value) + "\""));
     }
 
     private static String yamlQuote(String text) {
@@ -176,6 +180,7 @@ public final class NetworkConfig {
             if (i == start && lines[i].trim().equals(section + ": {}")) {
                 result.append(section).append(":\n");
                 result.append(additions);
+                additions = "";
                 continue;
             }
             if (i > start && !additions.isEmpty() && !lines[i].isBlank()

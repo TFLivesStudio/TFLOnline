@@ -34,16 +34,19 @@ jobs:
             jarfile=$(find "$module/build/libs" -maxdepth 1 -type f -name "TFLOnline-*.jar" ! -name "*sources*" | head -n1)
             test -n "$jarfile"
             test -s "$jarfile"
-            jar tf "$jarfile" | grep -q "com/tflives/tflonline/common/WireProtocol.class"
-            jar tf "$jarfile" | grep -q "com/tflives/tflonline/libs/yaml/Yaml.class"
+            listing=$(mktemp)
+            jar tf "$jarfile" > "$listing"
+            grep -Fq "com/tflives/tflonline/common/WireProtocol.class" "$listing"
+            grep -Fq "com/tflives/tflonline/libs/yaml/Yaml.class" "$listing"
             if [[ "$module" == velocity ]]; then
-              jar tf "$jarfile" | grep -q "META-INF/velocity-plugin.json"
+              grep -Fq "META-INF/velocity-plugin.json" "$listing"
             elif [[ "$module" == bungee ]]; then
-              jar tf "$jarfile" | grep -q "bungee.yml"
+              grep -Fq "bungee.yml" "$listing"
             else
-              jar tf "$jarfile" | grep -q "plugin.yml"
-              jar tf "$jarfile" | grep -q "com/tflives/tflonline/paper/TFLOnlineExpansion.class"
+              grep -Fq "plugin.yml" "$listing"
+              grep -Fq "com/tflives/tflonline/paper/TFLOnlineExpansion.class" "$listing"
             fi
+            rm -f "$listing"
             echo "OK: $jarfile"
           done
       - name: Publish Velocity build artifact
