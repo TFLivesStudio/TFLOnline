@@ -40,6 +40,16 @@ public final class TFLOnlineExpansion extends PlaceholderExpansion {
             ServerSnapshot server = snapshot.findServer(segments[1]);
             return server == null ? "N/A" : String.valueOf(server.players());
         }
+        if (segments.length == 3 && segments[0].equalsIgnoreCase("server")
+                && segments[2].equalsIgnoreCase("state")) {
+            ServerSnapshot server = snapshot.findServer(segments[1]);
+            return server == null ? "N/A" : server.state();
+        }
+        if (segments.length == 3 && segments[0].equalsIgnoreCase("server")
+                && segments[2].equalsIgnoreCase("capacity")) {
+            ServerSnapshot server = snapshot.findServer(segments[1]);
+            return server == null ? "N/A" : String.valueOf(server.capacity());
+        }
         if (segments.length == 3 && segments[0].equalsIgnoreCase("group")
                 && segments[2].equalsIgnoreCase("online")) {
             Integer count = snapshot.groupCount(segments[1]);

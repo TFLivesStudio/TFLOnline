@@ -9,7 +9,7 @@ The initial installation uses Minecraft's existing Plugin Messaging connection. 
 ## Downloads
 
 - **GitHub Actions:** open the most recent successful [Build & Test](https://github.com/TFLivesStudio/TFLOnline/actions/workflows/build.yml). The artifacts are named `TFLOnline-Velocity-JAR`, `TFLOnline-Bungee-JAR`, and `TFLOnline-Paper-JAR`. GitHub downloads Actions artifacts as **ZIP archives**. Extract each ZIP to obtain its executable `.jar`.
-- **GitHub Releases:** a tag like `v0.2.0` runs CI and, if all tests succeed, publishes **three individual executable JAR files** plus `SHA256SUMS.txt` on the [Releases page](https://github.com/TFLivesStudio/TFLOnline/releases). No Release is published merely because CI has run.
+- **GitHub Releases:** every successful push to `main` publishes a development **prerelease with the three individual JAR files**. A tag like `v0.2.0` runs CI and, if all tests succeed, publishes **three individual executable JAR files** plus `SHA256SUMS.txt` on the [Releases page](https://github.com/TFLivesStudio/TFLOnline/releases). Regular feature-branch CI artifacts are ZIP wrappers; development Releases expose the JAR files directly.
 
 ### Which JAR goes where?
 
@@ -42,6 +42,8 @@ Existing `tflonline.properties` installations are migrated automatically when `c
 | `%tflonline_server:skyblock:online%` | Players connected to a backend |
 | `%tflonline_group:survival:online%` | Sum of the configured group of **backends** |
 | `%tflonline_bar:skyblock%` | Occupancy bar (requires a positive capacity) |
+| `%tflonline_server:skyblock:capacity%` | Configured capacity (0 = unknown) |
+| `%tflonline_server:skyblock:state%` | Administrator-configured state, not a live reachability result |
 | `%tflonline_sync_status%` | `WAITING`, `CONNECTED`, `STALE` |
 | `%tflonline_sync_age%` | Age in seconds of the last snapshot |
 
